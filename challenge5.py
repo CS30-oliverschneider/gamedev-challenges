@@ -4,18 +4,18 @@ import math
 
 
 class Player:
-    def __init__(self):
+    def __init__(self, display_size, wall_y):
         self.r = 30
         self.x = display_size[0] / 2
         self.y = wall_y + (display_size[1] - wall_y) / 2
         self.speed = 0.3
         self.vx = 0
 
-    def draw(self):
+    def draw(self, screen):
         pygame.draw.circle(screen, "white", (self.x, self.y), self.r)
         pygame.draw.line(screen, "red", (self.x, self.y), (self.x, self.y - self.r), 3)
 
-    def update(self):
+    def update(self, game):
         pressed = pygame.key.get_pressed()
 
         if pressed[pygame.K_d]:
@@ -25,14 +25,14 @@ class Player:
         else:
             self.vx = 0
 
-        self.x += self.vx * dt
+        self.x += self.vx * game.dt
 
-        if mouse.click:
-            bullets.append(Bullet())
+        if game.mouse.click:
+            game.bullets.append(Bullet(self))
 
 
 class Circle:
-    def __init__(self):
+    def __init__(self, display_size, wall_y):
         self.r = random.uniform(20, 50)
         self.x = random.uniform(self.r, display_size[0] - self.r)
         self.y = random.uniform(self.r, wall_y - self.r)
@@ -40,19 +40,19 @@ class Circle:
         self.vx = random.uniform(0.05, 0.3) * [-1, 1][random.randrange(2)]
         self.vy = random.uniform(0.05, 0.3) * [-1, 1][random.randrange(2)]
 
-    def draw(self):
+    def draw(self, screen):
         pygame.draw.circle(screen, self.color, (self.x, self.y), self.r)
 
-    def update(self):
-        self.move()
-        self.wall_collision()
-        self.bullet_collision()
+    def update(self, game):
+        self.move(game.dt)
+        self.wall_collision(game.display_size, game.wall_y)
+        self.bullet_collision(game.bullets, game.circles)
 
-    def move(self):
+    def move(self, dt):
         self.x += self.vx * dt
         self.y += self.vy * dt
 
-    def wall_collision(self):
+    def wall_collision(self, display_size, wall_y):
         if self.x - self.r < 0:
             self.x = self.r
             self.vx *= -1
@@ -67,7 +67,7 @@ class Circle:
             self.y = wall_y - self.r
             self.vy *= -1
 
-    def bullet_collision(self):
+    def bullet_collision(self, bullets, circles):
         for bullet in bullets:
             dx = bullet.x - self.x
             dy = bullet.y - self.y
@@ -79,20 +79,20 @@ class Circle:
 
 
 class Bullet:
-    def __init__(self):
+    def __init__(self, player):
         self.x = player.x
         self.y = player.y - player.r
         self.r = 10
         self.vy = -0.5
 
-    def draw(self):
+    def draw(self, screen):
         pygame.draw.circle(screen, "white", (self.x, self.y), self.r)
 
-    def update(self):
-        self.y += self.vy * dt
+    def update(self, game):
+        self.y += self.vy * game.dt
 
         if self.y + self.r < 0:
-            bullets.remove(self)
+            game.bullets.remove(self)
 
 
 class Mouse:
@@ -119,41 +119,33 @@ class Game5:
         self.screen = screen
         self.clock = clock
 
-        self.running = True
         self.dt = 0
+        self.wall_y = 500
+        self.circles = []
+        self.bullets = []
+        self.player = Player(self.display_size, self.wall_y)
+        self.mouse = Mouse()
 
+        for _ in range(10):
+            self.circles.append(Circle(self.display_size, self.wall_y))
 
-wall_y = 500
-circles = []
-bullets = []
-player = Player()
-mouse = Mouse()
+    def loop(self):
+        self.screen.fill("black")
+        self.dt = self.clock.tick(60)
 
-for _ in range(10):
-    circles.append(Circle())
+        for circle in self.circles:
+            circle.update(self)
+        for bullet in self.bullets:
+            bullet.update(self)
+        self.mouse.update()
+        self.player.update(self)
 
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+        for circle in self.circles:
+            circle.draw(self.screen)
+        for bullet in self.bullets:
+            bullet.draw(self.screen)
+        self.player.draw(self.screen)
 
-    screen.fill("black")
-    dt = clock.tick(60)
+        pygame.draw.line(self.screen, "white", (0, self.wall_y), (self.display_size[0], self.wall_y), 3)
 
-    for circle in circles:
-        circle.update()
-    for bullet in bullets:
-        bullet.update()
-    mouse.update()
-    player.update()
-
-    for circle in circles:
-        circle.draw()
-    for bullet in bullets:
-        bullet.draw()
-    player.draw()
-
-    pygame.draw.line(screen, "white", (0, wall_y), (display_size[0], wall_y), 3)
-
-    pygame.display.flip()
+        pygame.display.flip()

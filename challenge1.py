@@ -73,7 +73,6 @@ class Game1:
         self.screen = screen
         self.clock = clock
 
-        self.running = True
         self.dt = 0
         self.player = Player()
         self.walls = []
@@ -81,10 +80,6 @@ class Game1:
         self.create_walls()
 
     def loop(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-
         self.screen.fill("black")
         self.dt = self.clock.tick(60)
 

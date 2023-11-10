@@ -90,7 +90,6 @@ class Game4:
         self.screen = screen
         self.clock = clock
 
-        self.running = True
         self.dt = 0
         self.mouse = Mouse()
         self.player = Player(self.display_size)
@@ -104,21 +103,21 @@ class Game4:
     def loop(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
+                return "quit"
 
-            self.frame_count += 1
-            self.screen.fill("black")
-            self.dt = self.clock.tick(60)
-            self.mouse.update()
+        self.frame_count += 1
+        self.screen.fill("black")
+        self.dt = self.clock.tick(60)
+        self.mouse.update()
 
-            self.spawn_circles()
-            for circle in self.circles:
-                circle.draw(self.screen)
+        self.spawn_circles()
+        for circle in self.circles:
+            circle.draw(self.screen)
 
-            self.player.update(self)
-            self.player.draw(self.screen)
+        self.player.update(self)
+        self.player.draw(self.screen)
 
-            pygame.display.flip()
+        pygame.display.flip()
 
     def spawn_circles(self):
         if self.frame_count % self.spawn_rate == 0:

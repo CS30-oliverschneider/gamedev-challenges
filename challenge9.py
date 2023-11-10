@@ -2,7 +2,7 @@ import pygame
 
 
 class Player:
-    def __init__(self):
+    def __init__(self, boundaries):
         self.w = 50
         self.h = 50
         self.x = boundaries.left + (boundaries.right - boundaries.left) / 2 - self.w / 2
@@ -13,18 +13,18 @@ class Player:
         self.vy = 0
         self.grounded = True
 
-    def draw(self):
+    def draw(self, game_view, screen):
         pygame.draw.rect(screen, "blue", (self.x - game_view.x, self.y - game_view.y, self.w, self.h))
 
-    def update(self):
-        self.update_velocity()
-        self.move()
+    def update(self, game):
+        self.update_velocity(game.gravity)
+        self.move(game.dt)
 
         self.grounded = False
-        self.boundary_collision()
-        self.platform_collision()
+        self.boundary_collision(game.boundaries)
+        self.platform_collision(game.platforms, game.dt)
 
-    def update_velocity(self):
+    def update_velocity(self, gravity):
         pressed = pygame.key.get_pressed()
 
         if pressed[pygame.K_d]:
@@ -40,11 +40,11 @@ class Player:
 
         self.vy += gravity
 
-    def move(self):
+    def move(self, dt):
         self.x += self.vx * dt
         self.y += self.vy * dt
 
-    def boundary_collision(self):
+    def boundary_collision(self, boundaries):
         if self.x < boundaries.left:
             self.x = boundaries.left
         elif self.x + self.w > boundaries.right:
@@ -58,7 +58,7 @@ class Player:
             self.vy = 0
             self.grounded = True
 
-    def platform_collision(self):
+    def platform_collision(self, platforms, dt):
         for platform in platforms:
             check_x = self.x + self.w > platform.x and self.x < platform.x + platform.w
             check_y = self.y + self.h > platform.y and self.y < platform.y + platform.h
@@ -86,11 +86,10 @@ class Player:
                 elif time_top == fastest:
                     self.y = platform.y - self.h
                     self.vy = 0
+                    self.grounded = True
                 elif time_bottom == fastest:
                     self.y = platform.y + platform.h
                     self.vy = 0
-
-                self.grounded = True
 
 
 class Platform:
@@ -100,7 +99,7 @@ class Platform:
         self.w = 150
         self.h = 20
 
-    def draw(self):
+    def draw(self, game_view, screen):
         if self.x + self.w > game_view.x and self.x < game_view.x + game_view.w:
             pygame.draw.rect(screen, "white", (self.x - game_view.x, self.y - game_view.y, self.w, self.h))
 
@@ -113,7 +112,7 @@ class Boundaries:
         self.bottom = 1000
         self.size = 100
 
-    def draw(self):
+    def draw(self, game_view, screen):
         if game_view.x < self.left:
             pygame.draw.rect(screen, "white", (0, 0, self.left - game_view.x, game_view.h))
         elif game_view.x + game_view.w > self.right:
@@ -126,13 +125,13 @@ class Boundaries:
 
 
 class GameView:
-    def __init__(self):
+    def __init__(self, display_size):
         self.x = 0
         self.y = 0
         self.w = display_size[0]
         self.h = display_size[1]
 
-    def update(self):
+    def update(self, player, boundaries):
         self.x = player.x + player.w / 2 - self.w / 2
         self.y = player.y + player.h / 2 - self.h / 2
 
@@ -153,60 +152,50 @@ class Game9:
         self.screen = screen
         self.clock = clock
 
-        self.running = True
         self.dt = 0
+        self.gravity = 0.03
+        self.platforms = []
+        self.boundaries = Boundaries()
+        self.game_view = GameView(self.display_size)
+        self.player = Player(self.boundaries)
+        self.create_platforms()
 
+    def loop(self):
+        self.screen.fill("black")
+        self.dt = self.clock.tick(60)
 
-def create_platforms():
-    row_num = 8
-    column_num = 8
-    max_x = 0
-    max_y = 0
+        self.player.update(self)
+        self.game_view.update(self.player, self.boundaries)
 
-    for n in range(row_num):
-        for m in range(column_num):
-            if (n + m) % 2 == 0:
-                continue
+        for platform in self.platforms:
+            platform.draw(self.game_view, self.screen)
+        self.boundaries.draw(self.game_view, self.screen)
+        self.player.draw(self.game_view, self.screen)
 
-            x = boundaries.left + (boundaries.right - boundaries.left) / column_num * m
-            y = boundaries.top + (boundaries.bottom - boundaries.top) / row_num * n
-            platforms.append(Platform(x, y))
+        pygame.display.flip()
 
-            if x > max_x:
-                max_x = x
-            if y > max_y:
-                max_y = y
+    def create_platforms(self):
+        row_num = 8
+        column_num = 8
+        max_x = 0
+        max_y = 0
 
-    x_offset = (boundaries.right - max_x - platforms[0].w) / 2
-    y_offset = (boundaries.bottom - max_y - platforms[0].h) / 2
-    for platform in platforms:
-        platform.x += x_offset
-        platform.y += y_offset
+        for n in range(row_num):
+            for m in range(column_num):
+                if (n + m) % 2 == 0:
+                    continue
 
+                x = self.boundaries.left + (self.boundaries.right - self.boundaries.left) / column_num * m
+                y = self.boundaries.top + (self.boundaries.bottom - self.boundaries.top) / row_num * n
+                self.platforms.append(Platform(x, y))
 
-gravity = 0.03
-platforms = []
-boundaries = Boundaries()
-game_view = GameView()
-player = Player()
-create_platforms()
+                if x > max_x:
+                    max_x = x
+                if y > max_y:
+                    max_y = y
 
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    pressed = pygame.key.get_pressed()
-    screen.fill("black")
-    dt = clock.tick(60)
-
-    player.update()
-    game_view.update()
-
-    for platform in platforms:
-        platform.draw()
-    boundaries.draw()
-    player.draw()
-
-    pygame.display.flip()
+        x_offset = (self.boundaries.right - max_x - self.platforms[0].w) / 2
+        y_offset = (self.boundaries.bottom - max_y - self.platforms[0].h) / 2
+        for platform in self.platforms:
+            platform.x += x_offset
+            platform.y += y_offset

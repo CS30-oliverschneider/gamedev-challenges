@@ -129,7 +129,6 @@ class Game3:
         self.screen = screen
         self.clock = clock
 
-        self.running = True
         self.dt = 0
         self.circles = []
         self.rectangles = []
@@ -138,10 +137,6 @@ class Game3:
         self.create_shapes()
 
     def loop(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-
         self.screen.fill("black")
         self.dt = self.clock.tick(60)
 
