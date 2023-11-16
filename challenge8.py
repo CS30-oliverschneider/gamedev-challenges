@@ -17,24 +17,22 @@ class Player:
         pygame.draw.rect(screen, "blue", (self.x - game_view.x, self.y, self.w, self.h))
 
     def update(self, game):
-        self.update_velocity(game.gravity)
+        self.update_velocity(game.gravity, game.keyboard)
         self.move(game.dt)
 
         self.grounded = False
         self.boundary_collision(game.boundaries)
         self.platform_collision(game.platforms)
 
-    def update_velocity(self, gravity):
-        pressed = pygame.key.get_pressed()
-
-        if pressed[pygame.K_d]:
+    def update_velocity(self, gravity, keyboard):
+        if keyboard.d:
             self.vx = self.walk_speed
-        elif pressed[pygame.K_a]:
+        elif keyboard.a:
             self.vx = -self.walk_speed
         else:
             self.vx = 0
 
-        if pressed[pygame.K_w] and self.grounded:
+        if keyboard.w and self.grounded:
             self.vy = -self.jump_speed
             self.grounded = False
 
@@ -111,10 +109,12 @@ class GameView:
 
 
 class Game8:
-    def __init__(self, display_size, screen, clock):
+    def __init__(self, display_size, screen, clock, keyboard, mouse):
         self.display_size = display_size
         self.screen = screen
         self.clock = clock
+        self.keyboard = keyboard
+        self.mouse = mouse
 
         self.dt = 0
         self.gravity = 0.05
@@ -124,9 +124,9 @@ class Game8:
         self.player = Player(self.game_view, self.boundaries)
         self.create_platforms()
 
-    def loop(self):
+    def loop(self, dt):
         self.screen.fill("black")
-        self.dt = self.clock.tick(60)
+        self.dt = dt
 
         self.player.update(self)
         self.game_view.update(self)
@@ -135,8 +135,6 @@ class Game8:
             platform.draw(self.game_view, self.screen)
         self.boundaries.draw(self.game_view, self.screen)
         self.player.draw(self.game_view, self.screen)
-
-        pygame.display.flip()
 
     def create_platforms(self):
         platform_num = 10

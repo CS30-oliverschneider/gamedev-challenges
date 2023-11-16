@@ -60,38 +60,15 @@ class Circle:
         pygame.draw.circle(screen, self.color, (self.x, self.y), self.r)
 
 
-class Mouse:
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.click = False
-        self.state = "up"
-
-    def update(self):
-        mouse_pos = pygame.mouse.get_pos()
-        self.x = mouse_pos[0]
-        self.y = mouse_pos[1]
-
-        mouse_down = pygame.mouse.get_pressed()[0]
-        if self.state == "up" and mouse_down:
-            self.state = "click"
-            self.click = True
-        elif self.state == "click" and mouse_down:
-            self.state = "down"
-            self.click = False
-        elif not mouse_down:
-            self.state = "up"
-            self.click = False
-
-
 class Game4:
-    def __init__(self, display_size, screen, clock):
+    def __init__(self, display_size, screen, clock, keyboard, mouse):
         self.display_size = display_size
         self.screen = screen
         self.clock = clock
+        self.keyboard = keyboard
+        self.mouse = mouse
 
         self.dt = 0
-        self.mouse = Mouse()
         self.player = Player(self.display_size)
         self.circles = []
         self.spawn_rate = 100
@@ -100,15 +77,14 @@ class Game4:
         for _ in range(20):
             self.circles.append(Circle(self.display_size))
 
-    def loop(self):
+    def loop(self, dt):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "quit"
 
         self.frame_count += 1
         self.screen.fill("black")
-        self.dt = self.clock.tick(60)
-        self.mouse.update()
+        self.dt = dt
 
         self.spawn_circles()
         for circle in self.circles:
@@ -116,8 +92,6 @@ class Game4:
 
         self.player.update(self)
         self.player.draw(self.screen)
-
-        pygame.display.flip()
 
     def spawn_circles(self):
         if self.frame_count % self.spawn_rate == 0:

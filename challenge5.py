@@ -16,18 +16,16 @@ class Player:
         pygame.draw.line(screen, "red", (self.x, self.y), (self.x, self.y - self.r), 3)
 
     def update(self, game):
-        pressed = pygame.key.get_pressed()
-
-        if pressed[pygame.K_d]:
+        if game.keyboard.d:
             self.vx = self.speed
-        elif pressed[pygame.K_a]:
+        elif game.keyboard.a:
             self.vx = -self.speed
         else:
             self.vx = 0
 
         self.x += self.vx * game.dt
 
-        if game.mouse.click:
+        if game.mouse.state == "click":
             game.bullets.append(Bullet(self))
 
 
@@ -95,49 +93,31 @@ class Bullet:
             game.bullets.remove(self)
 
 
-class Mouse:
-    def __init__(self):
-        self.click = False
-        self.state = "up"
-
-    def update(self):
-        down = pygame.mouse.get_pressed()[0]
-        if down and self.state == "up":
-            self.state = "click"
-            self.click = True
-        elif down and self.state == "click":
-            self.state = "down"
-            self.click = False
-        elif not down:
-            self.state = "up"
-            self.click = False
-
-
 class Game5:
-    def __init__(self, display_size, screen, clock):
+    def __init__(self, display_size, screen, clock, keyboard, mouse):
         self.display_size = display_size
         self.screen = screen
         self.clock = clock
+        self.keyboard = keyboard
+        self.mouse = mouse
 
         self.dt = 0
         self.wall_y = 500
         self.circles = []
         self.bullets = []
         self.player = Player(self.display_size, self.wall_y)
-        self.mouse = Mouse()
 
         for _ in range(10):
             self.circles.append(Circle(self.display_size, self.wall_y))
 
-    def loop(self):
+    def loop(self, dt):
         self.screen.fill("black")
-        self.dt = self.clock.tick(60)
+        self.dt = dt
 
         for circle in self.circles:
             circle.update(self)
         for bullet in self.bullets:
             bullet.update(self)
-        self.mouse.update()
         self.player.update(self)
 
         for circle in self.circles:
@@ -147,5 +127,3 @@ class Game5:
         self.player.draw(self.screen)
 
         pygame.draw.line(self.screen, "white", (0, self.wall_y), (self.display_size[0], self.wall_y), 3)
-
-        pygame.display.flip()

@@ -23,7 +23,7 @@ class Player:
         self.update_velocity()
         self.move(game.dt)
         self.angle = math.atan2(game.mouse.y - self.y, game.mouse.x - self.x)
-        if game.mouse.click:
+        if game.mouse.state == "click":
             game.bullets.append(Bullet(self))
 
     def update_velocity(self):
@@ -122,52 +122,30 @@ class Bullet:
             game.bullets.remove(self)
 
 
-class Mouse:
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.click = False
-        self.state = "up"
-
-    def update(self):
-        self.x, self.y = pygame.mouse.get_pos()
-
-        down = pygame.mouse.get_pressed()[0]
-        if down and self.state == "up":
-            self.state = "click"
-            self.click = True
-        elif down and self.state == "click":
-            self.state = "down"
-            self.click = False
-        elif not down:
-            self.state = "up"
-            self.click = False
-
-
 class Game7:
-    def __init__(self, display_size, screen, clock):
+    def __init__(self, display_size, screen, clock, keyboard, mouse):
         self.display_size = display_size
         self.screen = screen
         self.clock = clock
+        self.keyboard = keyboard
+        self.mouse = mouse
 
         self.dt = 0
         self.circles = []
         self.bullets = []
         self.player = Player(self.display_size)
-        self.mouse = Mouse()
 
         for _ in range(10):
             self.circles.append(Circle(self.display_size))
 
-    def loop(self):
+    def loop(self, dt):
         self.screen.fill("black")
-        self.dt = self.clock.tick(60)
+        self.dt = dt
 
         for circle in self.circles:
             circle.update(self)
         for bullet in self.bullets:
             bullet.update(self)
-        self.mouse.update()
         self.player.update(self)
 
         for circle in self.circles:
@@ -175,5 +153,3 @@ class Game7:
         for bullet in self.bullets:
             bullet.draw(self.screen)
         self.player.draw(self.screen)
-
-        pygame.display.flip()

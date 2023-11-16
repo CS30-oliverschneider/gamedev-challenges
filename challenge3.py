@@ -39,7 +39,7 @@ class Circle:
             self.vy *= -1
 
     def mouse_collision(self, mouse, circles, win):
-        if not mouse.click:
+        if not mouse.state == "click":
             return
 
         dx = mouse.x - self.x
@@ -89,7 +89,7 @@ class Rectangle:
             self.vy *= -1
 
     def mouse_collision(self, mouse, lose):
-        if not mouse.click:
+        if not mouse.state == "click":
             return
 
         check_x = mouse.x > self.x and mouse.x < self.x + self.w
@@ -99,48 +99,23 @@ class Rectangle:
             lose()
 
 
-class Mouse:
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.click = False
-        self.state = "up"
-
-    def update(self):
-        mouse_pos = pygame.mouse.get_pos()
-        self.x = mouse_pos[0]
-        self.y = mouse_pos[1]
-
-        mouse_down = pygame.mouse.get_pressed()[0]
-        if self.state == "up" and mouse_down:
-            self.state = "click"
-            self.click = True
-        elif self.state == "click" and mouse_down:
-            self.state = "down"
-            self.click = False
-        elif not mouse_down:
-            self.state = "up"
-            self.click = False
-
-
 class Game3:
-    def __init__(self, display_size, screen, clock):
+    def __init__(self, display_size, screen, clock, keyboard, mouse):
         self.display_size = display_size
         self.screen = screen
         self.clock = clock
+        self.keyboard = keyboard
+        self.mouse = mouse
 
         self.dt = 0
         self.circles = []
         self.rectangles = []
-        self.mouse = Mouse()
 
         self.create_shapes()
 
-    def loop(self):
+    def loop(self, dt):
         self.screen.fill("black")
-        self.dt = self.clock.tick(60)
-
-        self.mouse.update()
+        self.dt = dt
 
         for circle in self.circles:
             circle.update(self)
@@ -151,8 +126,6 @@ class Game3:
             circle.draw(self.screen)
         for rectangle in self.rectangles:
             rectangle.draw(self.screen)
-
-        pygame.display.flip()
 
     def win(self):
         print("Game Over - You WIN!")

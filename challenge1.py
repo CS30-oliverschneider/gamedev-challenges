@@ -17,23 +17,21 @@ class Player:
         pygame.draw.rect(screen, "purple", (self.x, self.y, self.w, self.h))
 
     def update(self, game):
-        self.update_velocity()
+        self.update_velocity(game.keyboard)
         self.move(game.dt)
         self.check_collision(game.walls)
 
-    def update_velocity(self):
-        pressed = pygame.key.get_pressed()
-
-        if pressed[pygame.K_d]:
+    def update_velocity(self, keyboard):
+        if keyboard.d:
             self.vx = self.speed
-        elif pressed[pygame.K_a]:
+        elif keyboard.a:
             self.vx = -self.speed
         else:
             self.vx = 0
 
-        if pressed[pygame.K_w]:
+        if keyboard.w:
             self.vy = -self.speed
-        elif pressed[pygame.K_s]:
+        elif keyboard.s:
             self.vy = self.speed
         else:
             self.vy = 0
@@ -68,10 +66,12 @@ class Wall:
 
 
 class Game1:
-    def __init__(self, display_size, screen, clock):
+    def __init__(self, display_size, screen, clock, keyboard, mouse):
         self.display_size = display_size
         self.screen = screen
         self.clock = clock
+        self.keyboard = keyboard
+        self.mouse = mouse
 
         self.dt = 0
         self.player = Player()
@@ -79,17 +79,15 @@ class Game1:
 
         self.create_walls()
 
-    def loop(self):
+    def loop(self, dt):
         self.screen.fill("black")
-        self.dt = self.clock.tick(60)
+        self.dt = dt
 
         self.player.update(self)
 
         self.player.draw(self.screen)
         for wall in self.walls:
             wall.draw(self.screen)
-
-        pygame.display.flip()
 
     def create_walls(self):
         for _ in range(10):

@@ -19,7 +19,7 @@ clock = pygame.time.Clock()
 class Level:
     def __init__(self):
         self.index = len(levels)
-        self.game = games[self.index](display_size, screen, clock)
+        self.game = games[self.index](display_size, screen, clock, keyboard, mouse)
         self.w = 150
         self.h = 150
 
@@ -45,26 +45,9 @@ class Level:
             global selected
             selected = self.index
 
-            if mouse.down:
-                start_level(self.index)
+            if mouse.state == "click":
+                run_level(self.index)
 
-class Mouse:
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.down = False
-        self.state = "up"
-
-    def update(self):
-        self.x, self.y = pygame.mouse.get_pos()
-        self.down = pygame.mouse.get_pressed()[0]
-
-        if self.state == "up" and self.down:
-            self.state = "click"
-        elif self.state == "click" and self.down:
-            self.state = "down"
-        elif not self.down:
-            self.state == "up"
 
 class Keyboard:
     def __init__(self):
@@ -76,34 +59,58 @@ class Keyboard:
         self.left = "up"
         self.right = "up"
 
+        self.history = []
         self.pressed = None
 
     def update(self):
         self.pressed = pygame.key.get_pressed()
 
-        self.w = self.set_bool("w", "w")
-        self.a = self.set_bool("a", "a")
-        self.s = self.set_bool("s", "s")
-        self.d = self.set_bool("d", "d")
-        self.escape = self.set_bool("escape", "ESCAPE")
+        self.w = self.set_bool("w")
+        self.a = self.set_bool("a")
+        self.s = self.set_bool("s")
+        self.d = self.set_bool("d")
+        self.escape = self.set_bool("ESCAPE")
 
-        self.left = self.set_state("left", "LEFT")
-        self.right = self.set_state("right", "RIGHT")
+        self.left = self.set_state(self.left, "LEFT")
+        self.right = self.set_state(self.right, "RIGHT")
 
-    def set_state(self, key_name, pygame_key_name):
-            key_down = self.pressed[getattr(pygame, f"K_{pygame_key_name}")]
-            key_state = getattr(self, key_name)
+    def set_state(self, current_state, key_name):
+        key_down = self.pressed[getattr(pygame, f"K_{key_name}")]
 
-            if key_down and key_state == "up":
-                setattr(self, key_name, "press")
-            elif key_down and key_state == "press":
-                setattr(self, key_name, "down")
-            elif not key_down:
-                setattr(self, key_name, "up")
+        if key_down and current_state == "up":
+            return "press"
+        elif key_down and current_state == "press":
+            return "down"
+        elif not key_down:
+            return "up"
 
-    def set_bool(self, key_name, pygame_key_name):
-        key_down = self.pressed[getattr(pygame, f"K_{pygame_key_name}")]
-        setattr(self, key_name, key_down)
+    def set_bool(self, key_name):
+        key_down = self.pressed[getattr(pygame, f"K_{key_name}")]
+
+        if key_down and key_name not in self.history:
+            self.history.insert(0, key_name)
+        elif not key_down and key_name in self.history:
+            self.history.remove(key_name)
+
+        return key_down
+
+
+class Mouse:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.state = "up"
+
+    def update(self):
+        self.x, self.y = pygame.mouse.get_pos()
+        down = pygame.mouse.get_pressed()[0]
+
+        if self.state == "up" and down:
+            self.state = "click"
+        elif self.state == "click" and down:
+            self.state = "down"
+        elif not down:
+            self.state = "up"
 
 
 games = [Game1, Game2, Game3, Game4, Game5, Game6, Game7, Game8, Game9]
@@ -112,22 +119,25 @@ mouse = Mouse()
 keyboard = Keyboard()
 font = pygame.font.Font("freesansbold.ttf", 70)
 selected = 0
-running = True
 
 for i in range(len(games)):
     levels.append(Level())
 
-def start_level(level_num):
+
+def run_level(level_num):
     game_state = "running"
     while game_state == "running":
         level = levels[level_num]
-        level.game.loop()
+        dt = clock.tick(60)
+        keyboard.update()
+        mouse.update()
+        level.game.loop(dt)
+        pygame.display.flip()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_state = "quit"
 
-        keyboard.update()
         if keyboard.escape:
             game_state = "menu"
         elif keyboard.left == "press":
@@ -136,18 +146,18 @@ def start_level(level_num):
             level_num = (level_num + 1) % 9
 
     if game_state == "quit":
-        global running
-        running = False
+        exit()
 
-while running:
+
+while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            exit()
 
     screen.fill((0, 20, 40))
     clock.tick(60)
-    mouse.update()
     selected = None
+    mouse.update()
 
     for level in levels:
         level.check_select()

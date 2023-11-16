@@ -8,7 +8,7 @@ class Player:
         self.x = boundaries.left + (boundaries.right - boundaries.left) / 2 - self.w / 2
         self.y = boundaries.bottom - self.h
         self.walk_speed = 0.4
-        self.jump_speed = 0.8
+        self.jump_speed = 1
         self.vx = 0
         self.vy = 0
         self.grounded = True
@@ -17,24 +17,22 @@ class Player:
         pygame.draw.rect(screen, "blue", (self.x - game_view.x, self.y - game_view.y, self.w, self.h))
 
     def update(self, game):
-        self.update_velocity(game.gravity)
+        self.update_velocity(game.gravity, game.keyboard)
         self.move(game.dt)
 
         self.grounded = False
         self.boundary_collision(game.boundaries)
         self.platform_collision(game.platforms, game.dt)
 
-    def update_velocity(self, gravity):
-        pressed = pygame.key.get_pressed()
-
-        if pressed[pygame.K_d]:
+    def update_velocity(self, gravity, keyboard):
+        if keyboard.d:
             self.vx = self.walk_speed
-        elif pressed[pygame.K_a]:
+        elif keyboard.a:
             self.vx = -self.walk_speed
         else:
             self.vx = 0
 
-        if pressed[pygame.K_w] and self.grounded:
+        if keyboard.w and self.grounded:
             self.vy = -self.jump_speed
             self.grounded = False
 
@@ -147,22 +145,24 @@ class GameView:
 
 
 class Game9:
-    def __init__(self, display_size, screen, clock):
+    def __init__(self, display_size, screen, clock, keyboard, mouse):
         self.display_size = display_size
         self.screen = screen
         self.clock = clock
+        self.keyboard = keyboard
+        self.mouse = mouse
 
         self.dt = 0
-        self.gravity = 0.03
+        self.gravity = 0.05
         self.platforms = []
         self.boundaries = Boundaries()
         self.game_view = GameView(self.display_size)
         self.player = Player(self.boundaries)
         self.create_platforms()
 
-    def loop(self):
+    def loop(self, dt):
         self.screen.fill("black")
-        self.dt = self.clock.tick(60)
+        self.dt = dt
 
         self.player.update(self)
         self.game_view.update(self.player, self.boundaries)

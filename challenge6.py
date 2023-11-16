@@ -22,21 +22,21 @@ class Player:
     def update(self, game):
         self.update_velocity(game.keyboard)
         self.move(game.dt)
-        if game.mouse.click:
+        if game.mouse.state == "click":
             game.bullets.append(Bullet(self))
 
     def update_velocity(self, keyboard):
-        if len(keyboard.pressed) == 0:
+        if len(keyboard.history) == 0:
             self.vx = 0
             self.vy = 0
             return
-        elif keyboard.pressed[0] == "w":
+        elif keyboard.history[0] == "w":
             self.direction = [0, -1]
-        elif keyboard.pressed[0] == "a":
+        elif keyboard.history[0] == "a":
             self.direction = [-1, 0]
-        elif keyboard.pressed[0] == "s":
+        elif keyboard.history[0] == "s":
             self.direction = [0, 1]
-        elif keyboard.pressed[0] == "d":
+        elif keyboard.history[0] == "d":
             self.direction = [1, 0]
 
         self.vx = self.direction[0] * self.speed
@@ -116,78 +116,30 @@ class Bullet:
             game.bullets.remove(self)
 
 
-class Mouse:
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.click = False
-        self.state = "up"
-
-    def update(self):
-        self.x, self.y = pygame.mouse.get_pos()
-
-        down = pygame.mouse.get_pressed()[0]
-        if down and self.state == "up":
-            self.state = "click"
-            self.click = True
-        elif down and self.state == "click":
-            self.state = "down"
-            self.click = False
-        elif not down:
-            self.state = "up"
-            self.click = False
-
-
-class Keyboard:
-    def __init__(self):
-        self.w = False
-        self.a = False
-        self.s = False
-        self.d = False
-        self.pressed = []
-
-    def update(self):
-        pressed = pygame.key.get_pressed()
-
-        for i in range(4):
-            key = ["w", "a", "s", "d"][i]
-
-            if pressed[getattr(pygame, f"K_{key}")]:
-                if not getattr(self, key):
-                    self.pressed.insert(0, key)
-                setattr(self, key, True)
-            else:
-                if getattr(self, key):
-                    self.pressed.remove(key)
-                setattr(self, key, False)
-
-
 class Game6:
-    def __init__(self, display_size, screen, clock):
+    def __init__(self, display_size, screen, clock, keyboard, mouse):
         self.display_size = display_size
         self.screen = screen
         self.clock = clock
+        self.keyboard = keyboard
+        self.mouse = mouse
 
         self.dt = 0
         self.circles = []
         self.bullets = []
         self.player = Player(self.display_size)
-        self.mouse = Mouse()
-        self.keyboard = Keyboard()
 
         for _ in range(10):
             self.circles.append(Circle(self.display_size))
 
-    def loop(self):
+    def loop(self, dt):
         self.screen.fill("black")
-        self.dt = self.clock.tick(60)
+        self.dt = dt
 
         for circle in self.circles:
             circle.update(self)
         for bullet in self.bullets:
             bullet.update(self)
-        self.mouse.update()
-        self.keyboard.update()
         self.player.update(self)
 
         for circle in self.circles:
@@ -195,5 +147,3 @@ class Game6:
         for bullet in self.bullets:
             bullet.draw(self.screen)
         self.player.draw(self.screen)
-
-        pygame.display.flip()
