@@ -110,11 +110,9 @@ class Game2:
             wall.draw(self.screen)
 
     def create_walls(self):
-        # for _ in range(10):
-        #     w = random.uniform(50, 100)
-        #     h = random.uniform(50, 100)
-        #     x = random.uniform(100, self.display_size[0] - w)
-        #     y = random.uniform(100, self.display_size[1] - h)
-        #     self.walls.append(Wall(x, y, w, h))
-        self.walls.append(Wall(105, 100, 100, 50))
-        self.walls.append(Wall(100, 189, 100, 50))
+        for _ in range(10):
+            w = random.uniform(50, 100)
+            h = random.uniform(50, 100)
+            x = random.uniform(100, self.display_size[0] - w)
+            y = random.uniform(100, self.display_size[1] - h)
+            self.walls.append(Wall(x, y, w, h))

@@ -74,19 +74,15 @@ class Rectangle:
         self.y += self.vy * dt
 
     def wall_collision(self, display_size):
-        if self.x < 0:
-            self.x = 0
-            self.vx *= -1
-        elif self.x + self.w > display_size[0]:
-            self.x = display_size[0] - self.w
-            self.vx *= -1
+        if self.x + self.w < 0:
+            self.x = display_size[0]
+        elif self.x > display_size[0]:
+            self.x = -self.w
 
-        if self.y < 0:
-            self.y = 0
-            self.vy *= -1
-        elif self.y + self.h > display_size[1]:
-            self.y = display_size[1] - self.h
-            self.vy *= -1
+        if self.y + self.h < 0:
+            self.y = display_size[1]
+        elif self.y > display_size[1]:
+            self.y = -self.h
 
     def mouse_collision(self, mouse, lose):
         if not mouse.state == "click":
